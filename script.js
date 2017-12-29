@@ -1,23 +1,41 @@
 const dataUrl = 'https://raw.githubusercontent.com/FreeCodeCamp/ProjectReferenceData/master/global-temperature.json';
+
+const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 const request = new XMLHttpRequest();
 request.open('GET', dataUrl, true);
 
 request.onload = () => {
   if (request.status >= 200 && request.status < 400) {
-    const dataset = JSON.parse(request.responseText);
-    console.log(dataset);
+    const data = JSON.parse(request.responseText);
+    // console.log(data.monthlyVariance);
+    const baseTemp = data.baseTemperature;
+    const dataset = data.monthlyVariance;
     const w = 1000;
     const h = 800;
     const padding = 60;
-    const marginTop = 120;
+    const marginLB = 90;
+    const cellHeight = (h - padding - marginLB) / months.length;
     const legendRectSize = 18;
     const legendSpacing = 8;
+    const year = d3.timeFormat('%Y');
 
-    // const maxLE = d3.max(dataset, (d) => d[1]);
-    // const minLE = d3.min(dataset, (d) => d[1]);
-    // const yScale = d3.scaleLinear()
-    //                  .domain([minLE, maxLE])
-    //                  .range([h - padding, marginTop]);
+    const years = dataset.map(d => d.year);
+    const uniqueYears = years.filter((value, index, self) =>
+    self.indexOf(value) === index);
+
+    const minYear = d3.min(uniqueYears);
+    const minDate = new Date(minYear, 0);
+    const maxYear = d3.max(uniqueYears);
+    const maxDate = new Date(maxYear, 0);
+    console.log(minDate, maxDate);
+    const xScale = d3.scaleTime()
+                     .domain([minDate, maxDate])
+                     .range([padding + marginLB, w - padding]);
+
+    const minVariance = d3.min(dataset, (d) => d.variance);
+    const maxVariance = d3.max(dataset, (d) => d.variance);
+
     // const maxGini = d3.max(dataset, (d) => d[3]);
     // const minGini = d3.min(dataset, (d) => d[3]);
     // const xScale = d3.scaleLinear()
@@ -28,8 +46,9 @@ request.onload = () => {
     // const rScale = d3.scaleLinear()
     //                  .domain([minGDP, maxGDP])
     //                  .range([5, 25]);
-    // const xAxis = d3.axisBottom(xScale);
-    // const yAxis = d3.axisLeft(yScale);
+    const xAxis = d3.axisBottom(xScale)
+                    .tickFormat(d3.timeFormat('%Y'));
+
 
     // const tip = d3.tip()
     //   .attr('class', 'd3-tip')
@@ -38,12 +57,23 @@ request.onload = () => {
     //     return "<div class='tip-name'>" + d[0] + "</div><div class='tip-gdp'>GDP Per Capita:<br>" + formatCurrency(d[2]) + "<br><div class='tip-gdp'>Life Expectancy: " + d[1] + " yrs</div><div class='tip-gdp'>Gini Index: " + d[3] + "</div>";
     //   });
 
-    // const svg = d3.select("body")
-    //   .append("svg")
-    //   .attr("width", w)
-    //   .attr("height", h)
-    //   .attr("class", "chart")
-    //   .attr("id", "chart");
+    const svg = d3.select("body")
+      .append("svg")
+      .attr("width", w)
+      .attr("height", h)
+      .attr("class", "chart")
+      .attr("id", "chart");
+
+    const monthLabels = svg.selectAll(".yLabel")
+                           .data(months)
+                           .enter()
+                           .append("text")
+                           .text((d) => d)
+                           .attr("x", 0)
+                           .attr("y", (d, i) => i * cellHeight)
+                           .style("text-anchor", "end")
+                           .attr("transform", `translate(${padding + marginLB}, ${cellHeight / 1.5})`)
+                           .attr("class", "yLabel");
 
     // svg.call(tip);
 
@@ -67,24 +97,20 @@ request.onload = () => {
     //   })
     //   .on('mouseout', tip.hide);
 
-    // svg.append("g")
-    //    .attr("transform", `translate(0, ${h - padding})`)
-    //    .call(xAxis);
+    svg.append("g")
+       .attr("transform", `translate(0, ${h - padding - marginLB})`)
+       .call(xAxis);
 
-    // // add titles to the axes
-    // svg.append("text")
-    //     .attr("text-anchor", "middle")
-    //     .attr("transform", "translate("+ (padding/2) +","+(h/2)+")rotate(-90)")
-    //     .text("Life Expectancy at Birth (in years)");
+    // add titles to the axes
+    svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("transform", `translate(${(padding + marginLB) / 2},${h/2})rotate(-90)`)
+        .text("Months");
 
-    // svg.append("text")
-    //     .attr("text-anchor", "middle")
-    //     .attr("transform", "translate("+ (w/2) +","+(h-(padding/3))+")")
-    //     .text("Gini Index (Measure of income inequality)");
-
-    // svg.append("g")
-    //    .attr("transform", `translate(${padding}, 0)`)
-    //    .call(yAxis);
+    svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("transform", "translate("+ (w/2) +","+(h-((padding + marginLB)/3))+")")
+        .text("Years");
 
     // const legend = svg.selectAll('.legend')
     //                   .data(color.domain())
