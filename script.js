@@ -10,6 +10,8 @@ request.onload = () => {
     const data = JSON.parse(request.responseText);
     const baseTemp = data.baseTemperature;
     const dataset = data.monthlyVariance;
+
+    // make responsive? -- add render function
     const w = 1200;
     const h = 800;
     const padding = 60;
@@ -19,7 +21,7 @@ request.onload = () => {
     const year = d3.timeFormat('%Y');
     const years = dataset.map(d => d.year);
     const uniqueYears = years.filter((value, index, self) =>
-    self.indexOf(value) === index);
+      self.indexOf(value) === index);
 
     const minYear = d3.min(uniqueYears);
     const minDate = new Date(minYear, 0);
@@ -38,7 +40,8 @@ request.onload = () => {
     const xAxis = d3.axisBottom(xScale)
                     .tickFormat(d3.timeFormat('%Y'));
 
-    const colors = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598", "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142"];
+    // fix colors
+    const colors = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598", "#f6ff03", "#fbad41", "#fb3533", "#c542aa", "#7916a5", "#0e1384"];
 
     const colorScale = d3.scaleQuantile()
     .domain([minVariance + baseTemp, maxVariance + baseTemp])
@@ -124,7 +127,7 @@ request.onload = () => {
 
     legend.append("text")
       .attr("class", "legend__text")
-      .text((d) => d3.format(".2f")(d))
+      .text((d) => d3.format(".1f")(d))
       .attr('x', 0)
       .attr('y', -1 * (legendRectSize / 2));
 
