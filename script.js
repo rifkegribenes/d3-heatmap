@@ -29,7 +29,7 @@ request.onload = () => {
     const cellWidth = (w - padding - marginLB) / uniqueYears.length;
     const xScale = d3.scaleTime()
                      .domain([minDate, maxDate])
-                     .range([padding + marginLB, w - padding]);
+                     .range([(padding / 2) + marginLB, w - (padding/2)]);
 
     const minVariance = d3.min(dataset, (d) => d.variance);
     const maxVariance = d3.max(dataset, (d) => d.variance);
@@ -68,9 +68,9 @@ request.onload = () => {
                            .append("text")
                            .text((d) => d)
                            .attr("x", 0)
-                           .attr("y", (d, i) => i * cellHeight)
+                           .attr("y", (d, i) => (i * cellHeight) + (padding/2))
                            .style("text-anchor", "end")
-                           .attr("transform", `translate(${padding + marginLB - 6}, ${cellHeight / 1.5})`)
+                           .attr("transform", `translate(${(padding/2) + marginLB - 6}, ${cellHeight / 1.5})`)
                            .attr("class", "yLabel");
 
     svg.call(tip);
@@ -82,30 +82,31 @@ request.onload = () => {
 
     temps.enter()
       .append("rect")
-      .attr("x", (d) => ((d.year - minYear) * cellWidth) + padding + marginLB)
-      .attr("y", (d) => (d.month - 1) * cellHeight)
+      .attr("x", (d) => ((d.year - minYear) * cellWidth) + (padding/2) + marginLB)
+      .attr("y", (d) => ((d.month - 1) * cellHeight) + (padding/2))
       .attr("rx", 0)
       .attr("ry", 0)
       .attr("width", cellWidth)
       .attr("height", cellHeight)
+      .attr("class", "bar")
       .style("fill", (d) => colorScale(d.variance + baseTemp))
       .on('mouseover', tip.show)
       .on('mouseout', tip.hide);
 
     // add x axis
     svg.append("g")
-       .attr("transform", `translate(0, ${h - padding - marginLB})`)
+       .attr("transform", `translate(0, ${h - (padding/2) - marginLB})`)
        .call(xAxis);
 
     // add titles to the axes
     svg.append("text")
         .attr("text-anchor", "middle")
-        .attr("transform", `translate(${(padding + marginLB) / 2},${h/2})rotate(-90)`)
+        .attr("transform", `translate(${(padding + marginLB) / 3},${h/2})rotate(-90)`)
         .text("Months");
 
     svg.append("text")
         .attr("text-anchor", "middle")
-        .attr("transform", "translate("+ (w/2) +","+(h-((padding + marginLB)/3))+")")
+        .attr("transform", "translate("+ (w/2) +","+(h-(((padding/2) + marginLB)/3))+")")
         .text("Years");
 
     // const legend = svg.selectAll('.legend')
