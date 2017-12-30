@@ -11,15 +11,11 @@ request.onload = () => {
     // console.log(data.monthlyVariance);
     const baseTemp = data.baseTemperature;
     const dataset = data.monthlyVariance;
-    const w = 1000;
+    const w = 1200;
     const h = 800;
     const padding = 60;
-    const marginLB = 90;
-    const cellHeight = (h - padding - marginLB) / months.length;
-    const legendRectSize = 18;
-    const legendSpacing = 8;
+    const marginLB = 40;
     const year = d3.timeFormat('%Y');
-
     const years = dataset.map(d => d.year);
     const uniqueYears = years.filter((value, index, self) =>
     self.indexOf(value) === index);
@@ -28,7 +24,9 @@ request.onload = () => {
     const minDate = new Date(minYear, 0);
     const maxYear = d3.max(uniqueYears);
     const maxDate = new Date(maxYear, 0);
-    console.log(minDate, maxDate);
+
+    const cellHeight = (h - padding - marginLB) / months.length;
+    const cellWidth = (w - padding - marginLB) / uniqueYears.length;
     const xScale = d3.scaleTime()
                      .domain([minDate, maxDate])
                      .range([padding + marginLB, w - padding]);
@@ -36,26 +34,26 @@ request.onload = () => {
     const minVariance = d3.min(dataset, (d) => d.variance);
     const maxVariance = d3.max(dataset, (d) => d.variance);
 
-    // const maxGini = d3.max(dataset, (d) => d[3]);
-    // const minGini = d3.min(dataset, (d) => d[3]);
-    // const xScale = d3.scaleLinear()
-    //                  .domain([minGini, maxGini])
-    //                  .range([padding, w - padding]);
-    // const maxGDP = d3.max(dataset, (d) => d[2]);
-    // const minGDP = d3.min(dataset, (d) => d[2]);
-    // const rScale = d3.scaleLinear()
-    //                  .domain([minGDP, maxGDP])
-    //                  .range([5, 25]);
     const xAxis = d3.axisBottom(xScale)
                     .tickFormat(d3.timeFormat('%Y'));
 
+    const colors = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598", "#ffffbf", "#fee08b", "#fdae61", "#f46d43", "#d53e4f", "#9e0142"];
 
-    // const tip = d3.tip()
-    //   .attr('class', 'd3-tip')
-    //   .offset([-10, 0])
-    //   .html((d) => {
-    //     return "<div class='tip-name'>" + d[0] + "</div><div class='tip-gdp'>GDP Per Capita:<br>" + formatCurrency(d[2]) + "<br><div class='tip-gdp'>Life Expectancy: " + d[1] + " yrs</div><div class='tip-gdp'>Gini Index: " + d[3] + "</div>";
-    //   });
+    const colorScale = d3.scaleQuantile()
+    .domain([minVariance + baseTemp, maxVariance + baseTemp])
+    .range(colors);
+
+    // const colorScale = d3.scaleSequential()
+    //                      .domain([minVariance + baseTemp, maxVariance + baseTemp])
+    //                      .interpolator(d3.interpolateRainbow);
+
+
+    const tip = d3.tip()
+      .attr('class', 'd3-tip')
+      .offset([-10, 0])
+      .html((d) => {
+        return `<div class='tip-name'>${months[d.month - 1]} ${d.year}</div><div class='tip-gdp'>${(Math.floor((d.variance + baseTemp) * 1000) / 1000)}°</div>`;
+      });
 
     const svg = d3.select("body")
       .append("svg")
@@ -72,31 +70,29 @@ request.onload = () => {
                            .attr("x", 0)
                            .attr("y", (d, i) => i * cellHeight)
                            .style("text-anchor", "end")
-                           .attr("transform", `translate(${padding + marginLB}, ${cellHeight / 1.5})`)
+                           .attr("transform", `translate(${padding + marginLB - 6}, ${cellHeight / 1.5})`)
                            .attr("class", "yLabel");
 
-    // svg.call(tip);
+    svg.call(tip);
 
-    // const color = d3.scaleOrdinal(d3.schemeCategory20);
+    const color = d3.scaleOrdinal(d3.schemeCategory20);
 
-    // svg.selectAll("circle")
-    //   .data(dataset)
-    //   .enter()
-    //   .append("circle")
-    //   .attr("cx", (d) => xScale(d[3]))
-    //   .attr("cy", (d) => yScale(d[1]))
-    //   .attr("r", (d) => rScale(d[2]))
-    //   .attr("fill", (d) => color(d[4]))
-    //   .attr("id", (d) => d[0])
-    //   .attr("class", (d) => `circle ${d[4]}`)
-    //   .on('mouseover', (d) => {
-    //     // only show tooltips for visible plots
-    //     if (!document.getElementById(d[0]).classList.contains('hidden')) {
-    //        tip.show(d);
-    //       }
-    //   })
-    //   .on('mouseout', tip.hide);
+    const temps = svg.selectAll(".years")
+      .data(dataset, (d) => `${d.year}:${d.month}`);
 
+    temps.enter()
+      .append("rect")
+      .attr("x", (d) => ((d.year - minYear) * cellWidth) + padding + marginLB)
+      .attr("y", (d) => (d.month - 1) * cellHeight)
+      .attr("rx", 0)
+      .attr("ry", 0)
+      .attr("width", cellWidth)
+      .attr("height", cellHeight)
+      .style("fill", (d) => colorScale(d.variance + baseTemp))
+      .on('mouseover', tip.show)
+      .on('mouseout', tip.hide);
+
+    // add x axis
     svg.append("g")
        .attr("transform", `translate(0, ${h - padding - marginLB})`)
        .call(xAxis);
