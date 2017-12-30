@@ -8,13 +8,14 @@ request.open('GET', dataUrl, true);
 request.onload = () => {
   if (request.status >= 200 && request.status < 400) {
     const data = JSON.parse(request.responseText);
-    // console.log(data.monthlyVariance);
     const baseTemp = data.baseTemperature;
     const dataset = data.monthlyVariance;
     const w = 1200;
     const h = 800;
     const padding = 60;
     const marginLB = 40;
+    const legendRectSize = 18;
+    const legendSpacing = 6;
     const year = d3.timeFormat('%Y');
     const years = dataset.map(d => d.year);
     const uniqueYears = years.filter((value, index, self) =>
@@ -42,10 +43,6 @@ request.onload = () => {
     const colorScale = d3.scaleQuantile()
     .domain([minVariance + baseTemp, maxVariance + baseTemp])
     .range(colors);
-
-    // const colorScale = d3.scaleSequential()
-    //                      .domain([minVariance + baseTemp, maxVariance + baseTemp])
-    //                      .interpolator(d3.interpolateRainbow);
 
 
     const tip = d3.tip()
@@ -109,60 +106,28 @@ request.onload = () => {
         .attr("transform", "translate("+ (w/2) +","+(h-(((padding/2) + marginLB)/3))+")")
         .text("Years");
 
-    // const legend = svg.selectAll('.legend')
-    //                   .data(color.domain())
-    //                   .enter()
-    //                   .append('g')
-    //                   .attr('class', 'legend')
-    //                   .attr('id', (d) => d)
-    //                   .attr('transform', function(d, i) {
-    //                     var height = legendRectSize + legendSpacing;
-    //                     var offset =  height * color.domain().length / 2;
-    //                     // var horz = -2 * legendRectSize;
-    //                     let row = i <= 5 ? 1 : 2;
-    //                     let horz = i <= 5 ?
-    //                       30 + (i * w / 6) :
-    //                       30 + ((i - 6) * w / 6);
-    //                     const vert = height * row;
-    //                     return 'translate(' + horz + ',' + vert + ')';
-    //                   })
-    //                   .on('click', (d) => {
-    //                     const allCircles = Array.from(document.getElementsByClassName('circle'));
-    //                     const otherContinents = allCircles.filter(el => !el.classList.contains(d));
-    //                     const continentMatches = Array.from(document.getElementsByClassName(d));
-    //                     otherContinents.forEach((el) => {
-    //                       el.classList.remove('visible');
-    //                       el.classList.add('hidden');
-    //                     });
-    //                     continentMatches.forEach((el) => {
-    //                       el.classList.remove('hidden');
-    //                       el.classList.add('visible');
-    //                     });
-    //                     document.getElementById('btn').classList.add('btn-show');
-    //                     document.getElementById('btn').classList.remove('btn-hide');
-    //                   });
+    const legend = svg.selectAll('.legend')
+                      .data([0].concat(colorScale.quantiles()))
+                      .enter()
+                      .append('g')
+                      .attr('class', 'legend')
+                      .attr('transform', (d, i) => {
+                        const vert = h - (legendRectSize + legendSpacing);
+                        const horz = w - padding - ((colors.length - (i + 1)) * (legendRectSize  * 2));
+                        return `translate(${horz}, ${vert})`;
+                      });
 
-    // legend.append('circle')
-    //   .attr('r', legendRectSize / 2)
-    //   .style('fill', color)
-    //   .style('stroke', color);
+    legend.append('rect')
+      .attr("width", legendRectSize * 2)
+      .attr("height", legendRectSize / 2)
+      .style("fill", (d, i) => colors[i]);
 
-    // legend.append('text')
-    //   .attr('x', legendRectSize )
-    //   .attr('y', legendRectSize - (legendSpacing * 1.5))
-    //   .text(function(d) { return d; });
+    legend.append("text")
+      .attr("class", "legend__text")
+      .text((d) => d3.format(".2f")(d))
+      .attr('x', 0)
+      .attr('y', -1 * (legendRectSize / 2));
 
-    // const showAll = () => {
-    //   const allCircles = Array.from(document.getElementsByClassName('circle'));
-    //   allCircles.forEach((el) => {
-    //     el.classList.remove('hidden');
-    //     el.classList.add('visible');
-    //   });
-    //   document.getElementById('btn').classList.add('btn-hide');
-    //   document.getElementById('btn').classList.remove('btn-show');
-    // }
-
-    // document.getElementById('btn').addEventListener("click", showAll);
   } else {
     console.log('error fetching data');
 
