@@ -4,13 +4,13 @@ const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 const colors = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598", "#f6ff03", "#fbad41", "#fb3533", "#c542aa", "#7916a5", "#0e1384"];
 
-let svg, data, x, y, xAxis, yAxis, dim, chartWrapper, cellHeight, cellWidth, uniqueYears, margin = {}, w, h, minYear, colorScale, baseTemp, xLabel, yLabel, xAxisG;
+let svg, data, x, y, xAxis, yAxis, dim, chartWrapper, cellHeight, cellWidth, uniqueYears, margin = {}, w, h, minYear, colorScale, baseTemp, xLabel, yLabel, xAxisG, legend, legendRect, legendText;
 
 const legendRectSize = 18;
 const legendSpacing = 6;
 
 const updateDimensions = (winWidth) => {
-  margin.top = 30;
+  margin.top = 70;
   margin.right = 30;
   margin.left = 70;
   margin.bottom = 70;
@@ -83,28 +83,16 @@ const render = (dataset) => {
   yLabel.attr("transform", `translate(${margin.left / 3},${h/2})rotate(-90)`)
 
 
-    // add legend
-    const legend = svg.selectAll('.legend')
-      .data([0].concat(colorScale.quantiles()))
-      .enter()
-      .append('g')
-      .attr('class', 'legend')
-      .attr('transform', (d, i) => {
-        const vert = h + margin.top + margin.bottom - (legendRectSize + legendSpacing);
-        const horz = w - ((colors.length - (i + 1)) * (legendRectSize  * 2));
-        return `translate(${horz}, ${vert})`;
-      });
+  // update legend
+  legend
+    .attr('transform', (d, i) => {
+      const vert = (margin.top / 2);
+      const totalWidthMidpoint = (w + margin.right + margin.left) / 2;
+      const legendMidpoint = (colors.length * legendRectSize);
+      const horz = (totalWidthMidpoint + legendMidpoint) - ((colors.length - (i + 1)) * (legendRectSize  * 2));
+      return `translate(${horz}, ${vert})`;
+    });
 
-    legend.append('rect')
-      .attr("width", legendRectSize * 2)
-      .attr("height", legendRectSize / 2)
-      .style("fill", (d, i) => colors[i]);
-
-    legend.append("text")
-      .attr("class", "legend__text")
-      .text((d) => d3.format(".1f")(d))
-      .attr('x', 0)
-      .attr('y', -1 * (legendRectSize / 2));
 }
 
 window.addEventListener('resize', render);
@@ -186,6 +174,30 @@ const init = () => {
      .style("text-anchor", "end")
      .attr("transform", `translate(${margin.left - 6}, ${cellHeight / 1.5})`)
      .attr("class", "yLabel");
+
+  // initialize legend
+  legend = svg.selectAll('.legend')
+    .data([0].concat(colorScale.quantiles()))
+    .enter()
+    .append('g')
+    .attr('class', 'legend')
+    .attr('transform', (d, i) => {
+      const vert = h + margin.top + margin.bottom - (legendRectSize + legendSpacing);
+      const horz = w - ((colors.length - (i + 1)) * (legendRectSize  * 2));
+      return `translate(${horz}, ${vert})`;
+    });
+
+  legendRect = legend.append('rect')
+    .attr("class", "legend__rect")
+    .attr("width", legendRectSize * 2)
+    .attr("height", legendRectSize / 2)
+    .style("fill", (d, i) => colors[i]);
+
+  legendText = legend.append("text")
+    .attr("class", "legend__text")
+    .text((d) => d3.format(".1f")(d))
+    .attr('x', 0)
+    .attr('y', -1 * (legendRectSize / 2));
 
    // render
    render(dataset);
