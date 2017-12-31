@@ -4,19 +4,14 @@ const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 const colors = ["#5e4fa2", "#3288bd", "#66c2a5", "#abdda4", "#e6f598", "#f6ff03", "#fbad41", "#fb3533", "#c542aa", "#7916a5", "#0e1384"];
 
-let svg, data, x, y, xAxis, yAxis, dim, chartWrapper, cellHeight, cellWidth, uniqueYears, margin = {}, w, h, minYear, colorScale, baseTemp, xLabel, yLabel, xAxisG, legend, legendRect, legendText;
+let svg, data, x = 0, y = 0, xAxis, yAxis, dim, chartWrapper, cellHeight = 0, cellWidth = 0, uniqueYears, margin = { top: 70, right: 30, left: 70, bottom: 70 }, w = 1200, h = .4 * w, minYear, colorScale, baseTemp, xLabel, yLabel, xAxisG, legend;
 
 const legendRectSize = 18;
 const legendSpacing = 6;
 
 const updateDimensions = (winWidth) => {
-  margin.top = 70;
-  margin.right = 30;
-  margin.left = 70;
-  margin.bottom = 70;
-
   w = winWidth - margin.left - margin.right;
-  h = .6 * w;
+  h = .4 * w;
   cellHeight = h / months.length;
   cellWidth = w / uniqueYears.length;
 
@@ -25,30 +20,22 @@ const updateDimensions = (winWidth) => {
 }
 
 const render = (dataset) => {
-  console.log('render');
-
-  //get dimensions based on window size
+  // update dimensions based on window size
   updateDimensions(window.innerWidth);
 
-  //update x scale to new dimensions
-  x.range([margin.left, w - margin.right]);
+  // update x scale
+  x.range([0, w]);
 
-  console.log(cellHeight,cellWidth);
-
-  //update svg to new dimensions
-  // console.log(`width: ${w + margin.right + margin.left}`);
-  // console.log(`height: ${h + margin.top + margin.bottom}`);
+  // update svg dimensions
   svg
     .attr('width', w + margin.right + margin.left)
     .attr('height', h + margin.top + margin.bottom)
-    // .attr('transform', `translate(${margin.left},${margin.top})`);
 
-  //update the x axis
+  // update x axis
   xAxis.scale(x);
 
-  console.log(h + margin.top + margin.bottom);
   xAxisG
-    .attr("transform", `translate(0, ${h + margin.top + margin.bottom + 100})`)
+    .attr("transform", `translate(${margin.left}, ${h + margin.top})`)
     .call(xAxis);
 
   // initialize tooltips
@@ -79,7 +66,7 @@ const render = (dataset) => {
 
   // update position of axis titles
 
-  xLabel.attr("transform", `translate(${w / 2},${h + (margin.bottom / 1.35)})`)
+  xLabel.attr("transform", `translate(${w / 2},${h + margin.top + (margin.bottom / 1.35)})`)
   yLabel.attr("transform", `translate(${margin.left / 3},${h/2})rotate(-90)`)
 
 
@@ -133,10 +120,9 @@ const init = () => {
     .attr("class", "chart")
     .attr("id", "chart");
 
+  // append x-axis line
   xAxisG = svg.append('g')
-    .attr('id', 'x-axis')
-    .attr("transform", `translate(0, ${h + margin.top + margin.bottom + 100})`)
-    .call(xAxis);
+    .attr("transform", `translate(0, ${h + margin.top})`)
 
   // add titles to the axes
   yLabel = svg.append("text")
@@ -148,8 +134,10 @@ const init = () => {
   xLabel = svg.append("text")
     .attr("id", "xLabel")
     .attr("text-anchor", "middle")
+    .attr("transform", `translate(${w / 2},${h + (margin.bottom / 1.35)})`)
     .text("Years");
 
+  // add temp data cells
   const temps = svg.selectAll(".years")
       .data(dataset, (d) => `${d.year}:${d.month}`);
 
@@ -164,7 +152,8 @@ const init = () => {
       .attr("class", "bar")
       .style("fill", (d) => colorScale(d.variance + baseTemp));
 
-  const monthLabels = svg.selectAll(".yLabel")
+  // add month labels to y axis
+  svg.selectAll(".yLabel")
      .data(months)
      .enter()
      .append("text")
